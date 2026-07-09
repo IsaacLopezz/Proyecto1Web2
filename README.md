@@ -3,27 +3,68 @@
 LINK para la web
 http://localhost/Proyecto1Web2/
 
+Base de datos: proyecto1web2 (aprobada por el profe en clase)
 
-Base de datos segun la aprovacion del profe en clase
+---
+
+## Estado de los modulos
 
 cliente                 - LISTO
-categoria               - 
-producto                -
+categoria               - LISTO
+producto                - LISTO
 factura                 -
 detalle_factura         -
 
-producto.id_categoria → categoria.id
+---
+
+## Relaciones entre tablas
+
+producto.cod_categoria → categoria.cod_categoria
 factura.cedula_cliente → cliente.cedula
-detalle_factura.id_factura → factura.id
-detalle_factura.codigo_producto → producto.codigo
+detalle_factura.num_factura → factura.num_factura
+detalle_factura.cod_producto → producto.cod_producto
 
+---
 
+## Lo que tiene cada modulo
 
+### Cliente
+- CRUD completo con DataTable en español
+- Formulario inline (sin modal)
+- Busca por cedula, edita, elimina de forma logica
 
-Una corta explicacion sobre el tema de eliminaciones 
+### Categoria
+- CRUD completo con DataTable en español
+- Formulario inline igual que clientes
+- Archivos: modelo/Categoria.php, controlador/categoria_ajax.php, vista/categorias.php, assets/js/categorias.js
 
-Cuando eliminas un cliente desde la pagina, no se borra fisicamente de la base de datos
-Lo que hace es trabajar con esto de aqui   UPDATE cliente SET estado = 0 WHERE cedula = ?
-por eso cuando vemos en la BD todavia sigue apareciendo aunq cuando lo vemos en la pagina ya no esta, principalmente sirve 
-cuando ya hicimos facturas con alguien y si despues la queremos borrar que no se haga un desmadre cuando se borra la persona pq sino las facturas con esa persona se puede hacer un error con la base de datos 
+### Producto
+- CRUD completo con DataTable en español
+- Tiene relacion con categoria: se puede escribir el codigo de la categoria y se autocompleta el nombre (evento blur + AJAX)
+- Boton lupa que abre un modal con la tabla de categorias para seleccionar una con clic
+- Valida que precio sea numero mayor o igual a cero
+- Valida que stock sea entero mayor o igual a cero
+- Archivos: modelo/Producto.php, controlador/producto_ajax.php, vista/productos.php, assets/js/productos.js
 
+---
+
+## Sobre las eliminaciones
+
+Cuando eliminas un cliente, categoria o producto desde la pagina, no se borra fisicamente de la base de datos.
+Lo que hace es: UPDATE [tabla] SET estado = 0 WHERE [pk] = ?
+
+Esto sirve principalmente para no hacer un desmadre con las facturas que ya existen.
+Si borraras fisicamente un cliente que ya tiene facturas, la base de datos tiraria error por las foreign keys.
+Con estado = 0 simplemente desaparece de la vista pero el registro sigue ahi guardado.
+
+Si agregas de nuevo un cliente o categoria con el mismo dato que ya estaba eliminado, el sistema lo reactiva en vez de crear un duplicado.
+
+---
+
+## Estructura de carpetas
+
+config/        -> global.php (credenciales) y Conexion.php (clase de conexion)
+modelo/        -> una clase PHP por entidad
+controlador/   -> endpoints AJAX que reciben peticiones y devuelven JSON
+vista/         -> paginas HTML con Bootstrap + DataTables
+assets/js/     -> un archivo JS por modulo
