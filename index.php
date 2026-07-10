@@ -11,6 +11,9 @@
     <style>
         body {
             background-color: #f5f6fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .hero {
@@ -109,7 +112,7 @@
             color: #adb5bd;
             font-size: 0.85rem;
             padding: 22px 0;
-            margin-top: 60px;
+            margin-top: auto;
         }
     </style>
 </head>
