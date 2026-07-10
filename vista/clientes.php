@@ -15,6 +15,7 @@
 
         <div class="navbar-nav">
             <a class="nav-link active" href="clientes.php">Clientes</a>
+            <a class="nav-link" href="categorias.php">Categorías</a>
             <a class="nav-link" href="productos.php">Productos</a>
             <a class="nav-link" href="factura.php">Facturas</a>
         </div>

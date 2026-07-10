@@ -12,8 +12,8 @@ Base de datos: proyecto1web2 (aprobada por el profe en clase)
 cliente                 - LISTO
 categoria               - LISTO
 producto                - LISTO
-factura                 -
-detalle_factura         -
+factura                 - LISTO
+detalle_factura         - LISTO
 
 ---
 
@@ -45,6 +45,18 @@ detalle_factura.cod_producto → producto.cod_producto
 - Valida que precio sea numero mayor o igual a cero
 - Valida que stock sea entero mayor o igual a cero
 - Archivos: modelo/Producto.php, controlador/producto_ajax.php, vista/productos.php, assets/js/productos.js
+
+### Factura
+- Encabezado: buscar cliente por cedula con autocompletado (blur + AJAX) y modal de busqueda
+- Detalle: seleccion de productos por codigo con autocompletado y modal de busqueda
+- Tabla de detalle dinamica en el DOM con botones para editar cantidad y eliminar linea
+- Calculo automatico de subtotales y total en tiempo real
+- Guardar factura con transaccion mysqli (begin_transaction / commit / rollback)
+- Si algo falla al guardar, se hace rollback y no queda nada a medias en la BD
+- Listado de facturas guardadas con DataTable
+- Ver detalle de cualquier factura en un modal
+- Anular factura: cambia estado a 0 y devuelve el stock de cada producto
+- Archivos: modelo/Factura.php, controlador/factura_ajax.php, vista/factura.php, assets/js/factura.js
 
 ---
 

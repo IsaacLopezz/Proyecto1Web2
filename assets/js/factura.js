@@ -80,22 +80,19 @@ function abrirModalClientes() {
         language: lenguajeTabla()
     });
 
-    let modal = new bootstrap.Modal(document.getElementById("modalClientes"));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("modalClientes")).show();
 }
 
 function seleccionarCliente(cedula, nombre) {
     $("#cedula_cliente").val(cedula);
     $("#nombre_cliente").val(nombre);
-
-    let modal = bootstrap.Modal.getInstance(document.getElementById("modalClientes"));
-    modal.hide();
+    bootstrap.Modal.getInstance(document.getElementById("modalClientes")).hide();
 }
 
 function buscarProductoPorCodigo() {
-    let codigo = $("#codigo_producto").val().trim();
+    let cod = $("#codigo_producto").val().trim();
 
-    if (codigo === "") {
+    if (cod === "") {
         limpiarProducto();
         return;
     }
@@ -103,14 +100,15 @@ function buscarProductoPorCodigo() {
     $.ajax({
         url: "../controlador/factura_ajax.php?op=buscarProducto",
         type: "POST",
-        data: { codigo: codigo },
+        data: { cod_producto: cod },
         dataType: "json",
         success: function (respuesta) {
             if (respuesta.estado) {
-                $("#codigo_producto").val(respuesta.datos.codigo);
-                $("#nombre_producto").val(respuesta.datos.nombre);
-                $("#precio_producto").val(parseFloat(respuesta.datos.precio).toFixed(2));
-                $("#stock_producto").val(respuesta.datos.stock);
+                let d = respuesta.datos;
+                $("#codigo_producto").val(d.cod_producto);
+                $("#nombre_producto").val(d.nombre);
+                $("#precio_producto").val(parseFloat(d.precio).toFixed(2));
+                $("#stock_producto").val(d.stock);
             } else {
                 limpiarProducto();
                 alert(respuesta.mensaje);
@@ -130,7 +128,7 @@ function abrirModalProductos() {
             dataSrc: "data"
         },
         columns: [
-            { data: "codigo" },
+            { data: "cod_producto" },
             { data: "nombre" },
             { data: "precio" },
             { data: "stock" },
@@ -141,30 +139,27 @@ function abrirModalProductos() {
         language: lenguajeTabla()
     });
 
-    let modal = new bootstrap.Modal(document.getElementById("modalProductos"));
-    modal.show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("modalProductos")).show();
 }
 
-function seleccionarProducto(codigo, nombre, precio, stock) {
-    $("#codigo_producto").val(codigo);
+function seleccionarProducto(cod, nombre, precio, stock) {
+    $("#codigo_producto").val(cod);
     $("#nombre_producto").val(nombre);
     $("#precio_producto").val(parseFloat(precio).toFixed(2));
     $("#stock_producto").val(stock);
     $("#cantidad_producto").val(1);
-
-    let modal = bootstrap.Modal.getInstance(document.getElementById("modalProductos"));
-    modal.hide();
+    bootstrap.Modal.getInstance(document.getElementById("modalProductos")).hide();
 }
 
 function agregarProductoDetalle() {
-    let codigo = $("#codigo_producto").val().trim();
-    let nombre = $("#nombre_producto").val().trim();
-    let precio = parseFloat($("#precio_producto").val());
-    let stock = parseInt($("#stock_producto").val());
+    let cod      = $("#codigo_producto").val().trim();
+    let nombre   = $("#nombre_producto").val().trim();
+    let precio   = parseFloat($("#precio_producto").val());
+    let stock    = parseInt($("#stock_producto").val());
     let cantidad = parseInt($("#cantidad_producto").val());
-    let indice = parseInt($("#indice_detalle").val());
+    let indice   = parseInt($("#indice_detalle").val());
 
-    if (codigo === "" || nombre === "" || isNaN(precio)) {
+    if (cod === "" || nombre === "" || isNaN(precio)) {
         alert("Debe seleccionar un producto válido");
         return;
     }
@@ -175,19 +170,19 @@ function agregarProductoDetalle() {
     }
 
     if (cantidad > stock) {
-        alert("La cantidad no puede ser mayor al stock disponible");
+        alert("La cantidad no puede ser mayor al stock disponible (" + stock + ")");
         return;
     }
 
     let subtotal = precio * cantidad;
 
     let item = {
-        codigo_producto: codigo,
+        cod_producto:    cod,
         nombre_producto: nombre,
-        precio: precio,
-        stock: stock,
-        cantidad: cantidad,
-        subtotal: subtotal
+        precio:          precio,
+        stock:           stock,
+        cantidad:        cantidad,
+        subtotal:        subtotal
     };
 
     if (indice >= 0) {
@@ -196,13 +191,13 @@ function agregarProductoDetalle() {
         $("#btnAgregarProducto").text("+");
         $("#codigo_producto").prop("readonly", false);
     } else {
-        let existe = detalles.findIndex(detalle => detalle.codigo_producto === codigo);
+        let existe = detalles.findIndex(function (d) { return d.cod_producto === cod; });
 
         if (existe >= 0) {
             let nuevaCantidad = detalles[existe].cantidad + cantidad;
 
             if (nuevaCantidad > stock) {
-                alert("La cantidad total supera el stock disponible");
+                alert("La cantidad total supera el stock disponible (" + stock + ")");
                 return;
             }
 
@@ -232,7 +227,7 @@ function renderizarDetalle() {
 
         let fila = `
             <tr>
-                <td>${item.codigo_producto}</td>
+                <td>${item.cod_producto}</td>
                 <td>${item.nombre_producto}</td>
                 <td>${item.precio.toFixed(2)}</td>
                 <td>${item.cantidad}</td>
@@ -266,7 +261,7 @@ function editarDetalle(index) {
     let item = detalles[index];
 
     $("#indice_detalle").val(index);
-    $("#codigo_producto").val(item.codigo_producto);
+    $("#codigo_producto").val(item.cod_producto);
     $("#nombre_producto").val(item.nombre_producto);
     $("#precio_producto").val(item.precio.toFixed(2));
     $("#stock_producto").val(item.stock);
@@ -277,9 +272,7 @@ function editarDetalle(index) {
 }
 
 function eliminarDetalle(index) {
-    let confirmar = confirm("¿Desea eliminar este producto del detalle?");
-
-    if (!confirmar) {
+    if (!confirm("¿Desea eliminar este producto del detalle?")) {
         return;
     }
 
@@ -288,18 +281,17 @@ function eliminarDetalle(index) {
 }
 
 function limpiarProducto() {
-    $("#codigo_producto").val("");
+    $("#codigo_producto").val("").prop("readonly", false);
     $("#nombre_producto").val("");
     $("#precio_producto").val("");
     $("#stock_producto").val("");
     $("#cantidad_producto").val("");
     $("#indice_detalle").val("-1");
-    $("#codigo_producto").prop("readonly", false);
     $("#btnAgregarProducto").text("+");
 }
 
 function guardarFactura() {
-    let fecha = $("#fecha").val();
+    let fecha          = $("#fecha").val();
     let cedula_cliente = $("#cedula_cliente").val().trim();
     let nombre_cliente = $("#nombre_cliente").val().trim();
 
@@ -314,7 +306,7 @@ function guardarFactura() {
     }
 
     if (detalles.length === 0) {
-        alert("Debe agregar productos a la factura");
+        alert("Debe agregar al menos un producto a la factura");
         return;
     }
 
@@ -322,9 +314,9 @@ function guardarFactura() {
         url: "../controlador/factura_ajax.php?op=guardar",
         type: "POST",
         data: {
-            fecha: fecha,
+            fecha:          fecha,
             cedula_cliente: cedula_cliente,
-            detalles: JSON.stringify(detalles)
+            detalles:       JSON.stringify(detalles)
         },
         dataType: "json",
         success: function (respuesta) {
@@ -345,10 +337,8 @@ function limpiarFactura() {
     $("#fecha").val(obtenerFechaActual());
     $("#cedula_cliente").val("");
     $("#nombre_cliente").val("");
-
-    limpiarProducto();
-
     detalles = [];
+    limpiarProducto();
     renderizarDetalle();
 }
 
@@ -360,23 +350,23 @@ function listarFacturas() {
             dataSrc: "data"
         },
         columns: [
-            { data: "id" },
+            { data: "num_factura" },
             { data: "fecha" },
             { data: "cedula_cliente" },
             { data: "cliente" },
             { data: "total" },
-            { data: "opciones" }
+            { data: "opciones", orderable: false }
         ],
         destroy: true,
         language: lenguajeTabla()
     });
 }
 
-function verFactura(id_factura) {
+function verFactura(num_factura) {
     $.ajax({
         url: "../controlador/factura_ajax.php?op=detalleFactura",
         type: "POST",
-        data: { id_factura: id_factura },
+        data: { num_factura: num_factura },
         dataType: "json",
         success: function (respuesta) {
             if (!respuesta.estado) {
@@ -394,24 +384,25 @@ function verFactura(id_factura) {
             respuesta.data.forEach(function (item) {
                 let fila = `
                     <tr>
-                        <td>${item.codigo_producto}</td>
+                        <td>${item.cod_producto}</td>
                         <td>${item.producto}</td>
                         <td>${item.precio}</td>
                         <td>${item.cantidad}</td>
                         <td>${item.subtotal}</td>
                     </tr>
                 `;
-
                 tbody.append(fila);
             });
 
             $("#tablaVerDetalleFactura").DataTable({
                 destroy: true,
+                paging: false,
+                searching: false,
+                info: false,
                 language: lenguajeTabla()
             });
 
-            let modal = new bootstrap.Modal(document.getElementById("modalDetalleFactura"));
-            modal.show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("modalDetalleFactura")).show();
         },
         error: function () {
             alert("Error al cargar el detalle de la factura");
@@ -419,17 +410,15 @@ function verFactura(id_factura) {
     });
 }
 
-function anularFactura(id_factura) {
-    let confirmar = confirm("¿Seguro que desea anular esta factura? Se devolvera el stock de los productos.");
-
-    if (!confirmar) {
+function anularFactura(num_factura) {
+    if (!confirm("¿Seguro que desea anular esta factura? Se devolverá el stock de los productos.")) {
         return;
     }
 
     $.ajax({
         url: "../controlador/factura_ajax.php?op=anularFactura",
         type: "POST",
-        data: { id_factura: id_factura },
+        data: { num_factura: num_factura },
         dataType: "json",
         success: function (respuesta) {
             alert(respuesta.mensaje);

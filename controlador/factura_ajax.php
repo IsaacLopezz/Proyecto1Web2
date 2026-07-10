@@ -13,7 +13,7 @@ switch ($op) {
 
         if ($cedula == "") {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Debe ingresar la cédula del cliente"
             ]);
             exit;
@@ -24,11 +24,11 @@ switch ($op) {
         if ($resultado) {
             echo json_encode([
                 "estado" => true,
-                "datos" => $resultado
+                "datos"  => $resultado
             ]);
         } else {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Cliente no encontrado"
             ]);
         }
@@ -40,16 +40,17 @@ switch ($op) {
         $data = [];
 
         while ($fila = $resultado->fetch_assoc()) {
+            $cedula = htmlspecialchars($fila["cedula"], ENT_QUOTES, "UTF-8");
+            $nombre = htmlspecialchars($fila["nombre"], ENT_QUOTES, "UTF-8");
+
             $data[] = [
-                "cedula" => htmlspecialchars($fila["cedula"], ENT_QUOTES, "UTF-8"),
-                "nombre" => htmlspecialchars($fila["nombre"], ENT_QUOTES, "UTF-8"),
-                "correo" => htmlspecialchars($fila["correo"], ENT_QUOTES, "UTF-8"),
+                "cedula"   => $cedula,
+                "nombre"   => $nombre,
+                "correo"   => htmlspecialchars($fila["correo"], ENT_QUOTES, "UTF-8"),
                 "telefono" => htmlspecialchars($fila["telefono"], ENT_QUOTES, "UTF-8"),
                 "opciones" => '
-                    <button class="btn btn-success btn-sm" onclick=\'seleccionarCliente(' . 
-                        json_encode($fila["cedula"]) . ', ' . 
-                        json_encode($fila["nombre"]) . 
-                    ')\'>
+                    <button class="btn btn-success btn-sm"
+                        onclick="seleccionarCliente(' . json_encode($fila["cedula"]) . ', ' . json_encode($fila["nombre"]) . ')">
                         Seleccionar
                     </button>'
             ];
@@ -59,26 +60,26 @@ switch ($op) {
         break;
 
     case "buscarProducto":
-        $codigo = isset($_POST["codigo"]) ? trim($_POST["codigo"]) : "";
+        $cod_producto = isset($_POST["cod_producto"]) ? trim($_POST["cod_producto"]) : "";
 
-        if ($codigo == "") {
+        if ($cod_producto == "") {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Debe ingresar el código del producto"
             ]);
             exit;
         }
 
-        $resultado = $factura->buscarProducto($codigo);
+        $resultado = $factura->buscarProducto($cod_producto);
 
         if ($resultado) {
             echo json_encode([
                 "estado" => true,
-                "datos" => $resultado
+                "datos"  => $resultado
             ]);
         } else {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Producto no encontrado"
             ]);
         }
@@ -90,19 +91,22 @@ switch ($op) {
         $data = [];
 
         while ($fila = $resultado->fetch_assoc()) {
+            $cod = (int) $fila["cod_producto"];
+
             $data[] = [
-                "codigo" => htmlspecialchars($fila["codigo"], ENT_QUOTES, "UTF-8"),
-                "nombre" => htmlspecialchars($fila["nombre"], ENT_QUOTES, "UTF-8"),
-                "precio" => number_format($fila["precio"], 2, ".", ""),
-                "stock" => intval($fila["stock"]),
-                "categoria" => htmlspecialchars($fila["categoria"], ENT_QUOTES, "UTF-8"),
-                "opciones" => '
-                    <button class="btn btn-success btn-sm" onclick=\'seleccionarProducto(' . 
-                        json_encode($fila["codigo"]) . ', ' . 
-                        json_encode($fila["nombre"]) . ', ' . 
-                        json_encode(number_format($fila["precio"], 2, ".", "")) . ', ' . 
-                        json_encode(intval($fila["stock"])) . 
-                    ')\'>
+                "cod_producto" => $cod,
+                "nombre"       => htmlspecialchars($fila["nombre"], ENT_QUOTES, "UTF-8"),
+                "precio"       => number_format($fila["precio"], 2, ".", ""),
+                "stock"        => (int) $fila["stock"],
+                "categoria"    => htmlspecialchars($fila["categoria"], ENT_QUOTES, "UTF-8"),
+                "opciones"     => '
+                    <button class="btn btn-success btn-sm"
+                        onclick="seleccionarProducto(' .
+                            json_encode($cod) . ', ' .
+                            json_encode($fila["nombre"]) . ', ' .
+                            json_encode(number_format($fila["precio"], 2, ".", "")) . ', ' .
+                            json_encode((int) $fila["stock"]) .
+                        ')">
                         Seleccionar
                     </button>'
             ];
@@ -112,13 +116,13 @@ switch ($op) {
         break;
 
     case "guardar":
-        $fecha = isset($_POST["fecha"]) ? trim($_POST["fecha"]) : "";
+        $fecha          = isset($_POST["fecha"])          ? trim($_POST["fecha"])          : "";
         $cedula_cliente = isset($_POST["cedula_cliente"]) ? trim($_POST["cedula_cliente"]) : "";
-        $detallesJson = isset($_POST["detalles"]) ? $_POST["detalles"] : "";
+        $detallesJson   = isset($_POST["detalles"])       ? $_POST["detalles"]             : "";
 
         if ($fecha == "" || $cedula_cliente == "") {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Fecha y cliente son obligatorios"
             ]);
             exit;
@@ -128,7 +132,7 @@ switch ($op) {
 
         if (!is_array($detalles) || count($detalles) == 0) {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Debe agregar productos a la factura"
             ]);
             exit;
@@ -145,19 +149,19 @@ switch ($op) {
         $data = [];
 
         while ($fila = $resultado->fetch_assoc()) {
-            $id = intval($fila["id"]);
+            $num = (int) $fila["num_factura"];
 
             $data[] = [
-                "id" => $id,
-                "fecha" => htmlspecialchars($fila["fecha"], ENT_QUOTES, "UTF-8"),
+                "num_factura"    => $num,
+                "fecha"          => htmlspecialchars($fila["fecha"], ENT_QUOTES, "UTF-8"),
                 "cedula_cliente" => htmlspecialchars($fila["cedula_cliente"], ENT_QUOTES, "UTF-8"),
-                "cliente" => htmlspecialchars($fila["cliente"], ENT_QUOTES, "UTF-8"),
-                "total" => number_format($fila["total"], 2, ".", ""),
-                "opciones" => '
-                    <button class="btn btn-info btn-sm" onclick="verFactura(' . $id . ')">
+                "cliente"        => htmlspecialchars($fila["cliente"], ENT_QUOTES, "UTF-8"),
+                "total"          => number_format($fila["total"], 2, ".", ""),
+                "opciones"       => '
+                    <button class="btn btn-info btn-sm" onclick="verFactura(' . $num . ')">
                         Ver
                     </button>
-                    <button class="btn btn-danger btn-sm" onclick="anularFactura(' . $id . ')">
+                    <button class="btn btn-danger btn-sm" onclick="anularFactura(' . $num . ')">
                         Anular
                     </button>
                 '
@@ -168,55 +172,55 @@ switch ($op) {
         break;
 
     case "detalleFactura":
-        $id_factura = isset($_POST["id_factura"]) ? intval($_POST["id_factura"]) : 0;
+        $num_factura = isset($_POST["num_factura"]) ? intval($_POST["num_factura"]) : 0;
 
-        if ($id_factura <= 0) {
+        if ($num_factura <= 0) {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Factura no válida"
             ]);
             exit;
         }
 
-        $resultado = $factura->obtenerDetalleFactura($id_factura);
+        $resultado = $factura->obtenerDetalleFactura($num_factura);
 
         $data = [];
 
         while ($fila = $resultado->fetch_assoc()) {
             $data[] = [
-                "codigo_producto" => htmlspecialchars($fila["codigo_producto"], ENT_QUOTES, "UTF-8"),
-                "producto" => htmlspecialchars($fila["producto"], ENT_QUOTES, "UTF-8"),
-                "cantidad" => intval($fila["cantidad"]),
-                "precio" => number_format($fila["precio"], 2, ".", ""),
-                "subtotal" => number_format($fila["subtotal"], 2, ".", "")
+                "cod_producto"   => htmlspecialchars($fila["cod_producto"], ENT_QUOTES, "UTF-8"),
+                "producto"       => htmlspecialchars($fila["producto"], ENT_QUOTES, "UTF-8"),
+                "cantidad"       => (int) $fila["cantidad"],
+                "precio"         => number_format($fila["precio_unitario"], 2, ".", ""),
+                "subtotal"       => number_format($fila["subtotal"], 2, ".", "")
             ];
         }
 
         echo json_encode([
             "estado" => true,
-            "data" => $data
+            "data"   => $data
         ]);
         break;
 
     case "anularFactura":
-        $id_factura = isset($_POST["id_factura"]) ? intval($_POST["id_factura"]) : 0;
+        $num_factura = isset($_POST["num_factura"]) ? intval($_POST["num_factura"]) : 0;
 
-        if ($id_factura <= 0) {
+        if ($num_factura <= 0) {
             echo json_encode([
-                "estado" => false,
+                "estado"  => false,
                 "mensaje" => "Factura no válida"
             ]);
             exit;
         }
 
-        $respuesta = $factura->anularFactura($id_factura);
+        $respuesta = $factura->anularFactura($num_factura);
 
         echo json_encode($respuesta);
         break;
 
     default:
         echo json_encode([
-            "estado" => false,
+            "estado"  => false,
             "mensaje" => "Operación no válida"
         ]);
         break;
