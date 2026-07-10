@@ -9,7 +9,39 @@ $(document).ready(function () {
         guardarProducto();
     });
 
-    // Autocompletado: cuando el usuario sale del campo cod_categoria
+    // Inicializar tabla de categorías la primera vez que se abre el modal
+    $("#modalCategorias").on("shown.bs.modal", function () {
+        if (!tablaModalCat) {
+            tablaModalCat = $("#tablaModalCat").DataTable({
+                ajax: {
+                    url: "../controlador/categoria_ajax.php?op=listar",
+                    type: "GET",
+                    dataSrc: "data"
+                },
+                columns: [
+                    { data: "cod_categoria" },
+                    { data: "nombre" }
+                ],
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    infoEmpty: "No hay categorías disponibles",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
+            });
+
+            $("#tablaModalCat tbody").css("cursor", "pointer");
+        } else {
+            tablaModalCat.columns.adjust();
+        }
+    });
+
+    // Autocompletado: busca en el <tbody> del modal al salir del campo
     $("#cod_categoria").on("blur", function () {
         let cod = $(this).val().trim();
 
@@ -18,24 +50,26 @@ $(document).ready(function () {
             return;
         }
 
-        buscarCategoriaPorCodigo(cod);
-    });
+        let encontrado = false;
 
-    // Inicializar modal de categorías
-    let elModal = document.getElementById("modalCategorias");
+        $("#tablaModalCat tbody tr").each(function () {
+            let codFila = $(this).find("td:eq(0)").text().trim();
 
-    elModal.addEventListener("shown.bs.modal", function () {
-        cargarCategoriasEnModal();
-    });
+            if (codFila === cod) {
+                $("#nombre_categoria").val($(this).find("td:eq(1)").text().trim());
+                encontrado = true;
+                return false;
+            }
+        });
 
-    elModal.addEventListener("hidden.bs.modal", function () {
-        if (tablaModalCat) {
-            tablaModalCat.destroy();
-            tablaModalCat = null;
+        if (!encontrado) {
+            $("#nombre_categoria").val("");
+            alert("Categoría no encontrada");
+            $("#cod_categoria").val("").focus();
         }
     });
 
-    // Click en fila del modal (delegado para que funcione aunque la tabla se recree)
+    // Click en fila del modal para seleccionar categoría
     $("#modalCategorias").on("click", "#tablaModalCat tbody tr", function () {
         if (!tablaModalCat) return;
 
@@ -43,7 +77,6 @@ $(document).ready(function () {
 
         if (datos) {
             $("#cod_categoria").val(datos.cod_categoria);
-            // datos.nombre viene con htmlspecialchars del servidor, lo decodificamos
             $("#nombre_categoria").val($("<div>").html(datos.nombre).text());
             bootstrap.Modal.getInstance(document.getElementById("modalCategorias")).hide();
         }
@@ -157,9 +190,7 @@ function editarProducto(cod) {
 }
 
 function eliminarProducto(cod) {
-    let confirmar = confirm("¿Seguro que desea eliminar este producto?");
-
-    if (!confirmar) {
+    if (!confirm("¿Seguro que desea eliminar este producto?")) {
         return;
     }
 
@@ -188,56 +219,6 @@ function limpiarFormulario() {
     $("#nombre_categoria").val("");
 }
 
-function buscarCategoriaPorCodigo(cod) {
-    $.ajax({
-        url: "../controlador/categoria_ajax.php?op=buscar",
-        type: "POST",
-        data: { cod_categoria: cod },
-        dataType: "json",
-        success: function (respuesta) {
-            if (respuesta.estado) {
-                $("#nombre_categoria").val(respuesta.datos.nombre);
-            } else {
-                $("#nombre_categoria").val("");
-                alert("Categoría no encontrada");
-                $("#cod_categoria").val("").focus();
-            }
-        },
-        error: function () {
-            alert("Error al buscar la categoría");
-        }
-    });
-}
-
 function abrirModalCategorias() {
     bootstrap.Modal.getOrCreateInstance(document.getElementById("modalCategorias")).show();
-}
-
-function cargarCategoriasEnModal() {
-    tablaModalCat = $("#tablaModalCat").DataTable({
-        ajax: {
-            url: "../controlador/categoria_ajax.php?op=listar",
-            type: "GET",
-            dataSrc: "data"
-        },
-        columns: [
-            { data: "cod_categoria" },
-            { data: "nombre" }
-        ],
-        destroy: true,
-        language: {
-            search: "Buscar:",
-            lengthMenu: "Mostrar _MENU_ registros",
-            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-            infoEmpty: "No hay categorías disponibles",
-            zeroRecords: "No se encontraron resultados",
-            paginate: {
-                next: "Siguiente",
-                previous: "Anterior"
-            }
-        }
-    });
-
-    // Cursor pointer para indicar que las filas son clickeables
-    $("#tablaModalCat tbody").css("cursor", "pointer");
 }

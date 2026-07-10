@@ -1,5 +1,7 @@
 let detalles = [];
 let tablaFacturas;
+let tablaBuscarClientes  = null;
+let tablaBuscarProductos = null;
 
 $(document).ready(function () {
     $("#fecha").val(obtenerFechaActual());
@@ -7,12 +9,107 @@ $(document).ready(function () {
     listarFacturas();
     renderizarDetalle();
 
-    $("#cedula_cliente").on("blur", function () {
-        buscarClientePorCedula();
+    // Inicializar tabla de clientes la primera vez que se abre el modal
+    $("#modalClientes").on("shown.bs.modal", function () {
+        if (!tablaBuscarClientes) {
+            tablaBuscarClientes = $("#tablaBuscarClientes").DataTable({
+                ajax: {
+                    url: "../controlador/factura_ajax.php?op=listarClientes",
+                    type: "GET",
+                    dataSrc: "data"
+                },
+                columns: [
+                    { data: "cedula" },
+                    { data: "nombre" },
+                    { data: "correo" },
+                    { data: "telefono" },
+                    { data: "opciones" }
+                ],
+                language: lenguajeTabla()
+            });
+        } else {
+            tablaBuscarClientes.columns.adjust();
+        }
     });
 
+    // Inicializar tabla de productos la primera vez que se abre el modal
+    $("#modalProductos").on("shown.bs.modal", function () {
+        if (!tablaBuscarProductos) {
+            tablaBuscarProductos = $("#tablaBuscarProductos").DataTable({
+                ajax: {
+                    url: "../controlador/factura_ajax.php?op=listarProductos",
+                    type: "GET",
+                    dataSrc: "data"
+                },
+                columns: [
+                    { data: "cod_producto" },
+                    { data: "nombre" },
+                    { data: "precio" },
+                    { data: "stock" },
+                    { data: "categoria" },
+                    { data: "opciones" }
+                ],
+                language: lenguajeTabla()
+            });
+        } else {
+            tablaBuscarProductos.columns.adjust();
+        }
+    });
+
+    // Autocompletar cédula: busca en el <tbody> de la tabla de clientes
+    $("#cedula_cliente").on("blur", function () {
+        let cedula = $(this).val().trim();
+
+        if (cedula === "") {
+            $("#nombre_cliente").val("");
+            return;
+        }
+
+        let encontrado = false;
+
+        $("#tablaBuscarClientes tbody tr").each(function () {
+            let cedulaFila = $(this).find("td:eq(0)").text().trim();
+
+            if (cedulaFila === cedula) {
+                $("#nombre_cliente").val($(this).find("td:eq(1)").text().trim());
+                encontrado = true;
+                return false;
+            }
+        });
+
+        if (!encontrado) {
+            $("#nombre_cliente").val("");
+            alert("Cliente no encontrado");
+        }
+    });
+
+    // Autocompletar código producto: busca en el <tbody> de la tabla de productos
     $("#codigo_producto").on("blur", function () {
-        buscarProductoPorCodigo();
+        let cod = $(this).val().trim();
+
+        if (cod === "") {
+            limpiarProducto();
+            return;
+        }
+
+        let encontrado = false;
+
+        $("#tablaBuscarProductos tbody tr").each(function () {
+            let codFila = $(this).find("td:eq(0)").text().trim();
+
+            if (codFila === cod) {
+                $("#nombre_producto").val($(this).find("td:eq(1)").text().trim());
+                $("#precio_producto").val(parseFloat($(this).find("td:eq(2)").text().trim()).toFixed(2));
+                $("#stock_producto").val($(this).find("td:eq(3)").text().trim());
+                encontrado = true;
+                return false;
+            }
+        });
+
+        if (!encontrado) {
+            limpiarProducto();
+            alert("Producto no encontrado");
+        }
     });
 });
 
@@ -35,51 +132,7 @@ function lenguajeTabla() {
     };
 }
 
-function buscarClientePorCedula() {
-    let cedula = $("#cedula_cliente").val().trim();
-
-    if (cedula === "") {
-        $("#nombre_cliente").val("");
-        return;
-    }
-
-    $.ajax({
-        url: "../controlador/factura_ajax.php?op=buscarCliente",
-        type: "POST",
-        data: { cedula: cedula },
-        dataType: "json",
-        success: function (respuesta) {
-            if (respuesta.estado) {
-                $("#nombre_cliente").val(respuesta.datos.nombre);
-            } else {
-                $("#nombre_cliente").val("");
-                alert(respuesta.mensaje);
-            }
-        },
-        error: function () {
-            alert("Error al buscar el cliente");
-        }
-    });
-}
-
 function abrirModalClientes() {
-    $("#tablaBuscarClientes").DataTable({
-        ajax: {
-            url: "../controlador/factura_ajax.php?op=listarClientes",
-            type: "GET",
-            dataSrc: "data"
-        },
-        columns: [
-            { data: "cedula" },
-            { data: "nombre" },
-            { data: "correo" },
-            { data: "telefono" },
-            { data: "opciones" }
-        ],
-        destroy: true,
-        language: lenguajeTabla()
-    });
-
     bootstrap.Modal.getOrCreateInstance(document.getElementById("modalClientes")).show();
 }
 
@@ -89,56 +142,7 @@ function seleccionarCliente(cedula, nombre) {
     bootstrap.Modal.getInstance(document.getElementById("modalClientes")).hide();
 }
 
-function buscarProductoPorCodigo() {
-    let cod = $("#codigo_producto").val().trim();
-
-    if (cod === "") {
-        limpiarProducto();
-        return;
-    }
-
-    $.ajax({
-        url: "../controlador/factura_ajax.php?op=buscarProducto",
-        type: "POST",
-        data: { cod_producto: cod },
-        dataType: "json",
-        success: function (respuesta) {
-            if (respuesta.estado) {
-                let d = respuesta.datos;
-                $("#codigo_producto").val(d.cod_producto);
-                $("#nombre_producto").val(d.nombre);
-                $("#precio_producto").val(parseFloat(d.precio).toFixed(2));
-                $("#stock_producto").val(d.stock);
-            } else {
-                limpiarProducto();
-                alert(respuesta.mensaje);
-            }
-        },
-        error: function () {
-            alert("Error al buscar el producto");
-        }
-    });
-}
-
 function abrirModalProductos() {
-    $("#tablaBuscarProductos").DataTable({
-        ajax: {
-            url: "../controlador/factura_ajax.php?op=listarProductos",
-            type: "GET",
-            dataSrc: "data"
-        },
-        columns: [
-            { data: "cod_producto" },
-            { data: "nombre" },
-            { data: "precio" },
-            { data: "stock" },
-            { data: "categoria" },
-            { data: "opciones" }
-        ],
-        destroy: true,
-        language: lenguajeTabla()
-    });
-
     bootstrap.Modal.getOrCreateInstance(document.getElementById("modalProductos")).show();
 }
 
@@ -325,6 +329,9 @@ function guardarFactura() {
             if (respuesta.estado) {
                 limpiarFactura();
                 tablaFacturas.ajax.reload();
+                if (tablaBuscarProductos) {
+                    tablaBuscarProductos.ajax.reload();
+                }
             }
         },
         error: function () {
@@ -425,6 +432,9 @@ function anularFactura(num_factura) {
 
             if (respuesta.estado) {
                 tablaFacturas.ajax.reload();
+                if (tablaBuscarProductos) {
+                    tablaBuscarProductos.ajax.reload();
+                }
             }
         },
         error: function () {

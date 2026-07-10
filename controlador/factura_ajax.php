@@ -48,11 +48,7 @@ switch ($op) {
                 "nombre"   => $nombre,
                 "correo"   => htmlspecialchars($fila["correo"], ENT_QUOTES, "UTF-8"),
                 "telefono" => htmlspecialchars($fila["telefono"], ENT_QUOTES, "UTF-8"),
-                "opciones" => '
-                    <button class="btn btn-success btn-sm"
-                        onclick="seleccionarCliente(' . json_encode($fila["cedula"]) . ', ' . json_encode($fila["nombre"]) . ')">
-                        Seleccionar
-                    </button>'
+                "opciones" => '<button class="btn btn-success btn-sm" onclick=\'seleccionarCliente(' . json_encode($fila["cedula"]) . ', ' . json_encode($fila["nombre"]) . ')\'>Seleccionar</button>'
             ];
         }
 
@@ -99,16 +95,12 @@ switch ($op) {
                 "precio"       => number_format($fila["precio"], 2, ".", ""),
                 "stock"        => (int) $fila["stock"],
                 "categoria"    => htmlspecialchars($fila["categoria"], ENT_QUOTES, "UTF-8"),
-                "opciones"     => '
-                    <button class="btn btn-success btn-sm"
-                        onclick="seleccionarProducto(' .
-                            json_encode($cod) . ', ' .
-                            json_encode($fila["nombre"]) . ', ' .
-                            json_encode(number_format($fila["precio"], 2, ".", "")) . ', ' .
-                            json_encode((int) $fila["stock"]) .
-                        ')">
-                        Seleccionar
-                    </button>'
+                "opciones"     => '<button class="btn btn-success btn-sm" onclick=\'seleccionarProducto(' .
+                    json_encode($cod) . ', ' .
+                    json_encode($fila["nombre"]) . ', ' .
+                    json_encode(number_format($fila["precio"], 2, ".", "")) . ', ' .
+                    json_encode((int) $fila["stock"]) .
+                ')\'>Seleccionar</button>'
             ];
         }
 
